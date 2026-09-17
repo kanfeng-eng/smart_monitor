@@ -8,12 +8,18 @@ CONFIG += c++17
 
 SOURCES += \
     main.cpp \
+    src/controller/loginctl.cpp \
     src/model/dbconn.cpp \
-    src/view/mainwindow.cpp
+    src/model/usermodel.cpp \
+    src/view/loginview.cpp \
+    src/view/mainview.cpp
 
 HEADERS += \
+    src/controller/loginctl.h \
     src/model/dbconn.h \
-    src/view/mainwindow.h
+    src/model/usermodel.h \
+    src/view/loginview.h \
+    src/view/mainview.h
 
 
 # =========================
