@@ -1,0 +1,16 @@
+CREATE DATABASE IF NOT EXISTS smart_monitor
+DEFAULT CHARACTER SET utf8mb4
+COLLATE utf8mb4_unicode_ci;
+
+USE smart_monitor;
+
+
+CREATE TABLE admins (
+    admin_id INT PRIMARY KEY AUTO_INCREMENT,
+
+    username VARCHAR(10) NOT NULL UNIQUE,
+
+    password VARCHAR(32) NOT NULL,
+
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
