@@ -1,2 +1,17 @@
-# smart_monitor
-A mature security monitoring system designed for residential communities
+# 智能监控系统
+
+Windows 本地监控客户端，当前完成项目规划中 9 月 16 日至 20 日的范围：
+
+- 管理员登录、验证码、失败锁定与未登录权限限制
+- 1~4 路摄像头采集，设备不足时显示测试画面
+- 单画面/四画面切换与通道命名
+- 四路录像、60 秒自动分段、目录与文件统一命名
+- 录像记录写入 MySQL，磁盘剩余空间低于 10% 时告警并记录日志
+
+## 运行准备
+
+1. 执行 `sql/smart_monitor.sql` 初始化 MySQL 数据库。
+2. 确认 Qt 的 MySQL 驱动可用，并按需修改 `src/model/dbconn.cpp` 中的连接参数。
+3. 在 Qt Creator 中打开 `smart_monitor.pro`，选择 Qt 6 MinGW 64 位套件，并确认 `OPENCV_ROOT` 指向同为 64 位的 OpenCV 目录后构建。
+
+录像默认保存到用户文档目录下的 `SmartMonitor/recordings`。通道名称和录像路径使用 `QSettings` 持久化。

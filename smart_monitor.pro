@@ -1,5 +1,5 @@
 QT += widgets sql
-CONFIG += c++17
+CONFIG += c++11
 
 
 # =========================
@@ -11,6 +11,9 @@ SOURCES += \
     src/controller/loginctl.cpp \
     src/model/dbconn.cpp \
     src/model/usermodel.cpp \
+    src/model/videomodel.cpp \
+    src/view/camerawidget.cpp \
+    src/view/cameraworker.cpp \
     src/view/loginview.cpp \
     src/view/mainview.cpp
 
@@ -18,6 +21,9 @@ HEADERS += \
     src/controller/loginctl.h \
     src/model/dbconn.h \
     src/model/usermodel.h \
+    src/model/videomodel.h \
+    src/view/camerawidget.h \
+    src/view/cameraworker.h \
     src/view/loginview.h \
     src/view/mainview.h
 
@@ -28,6 +34,7 @@ HEADERS += \
 
 INCLUDEPATH += $$PWD/src/model
 INCLUDEPATH += $$PWD/src/view
+INCLUDEPATH += $$PWD/src/controller
 INCLUDEPATH += $$PWD/src/include
 
 
