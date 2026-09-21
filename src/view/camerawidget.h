@@ -27,6 +27,8 @@ public:
     void stop();
     void setRecording(bool enabled);
     void setChannelName(const QString &name);
+    void setFallbackVideo(const QString &filePath);
+    void setStoragePath(const QString &path);
     void setSelected(bool selected);
 
 signals:

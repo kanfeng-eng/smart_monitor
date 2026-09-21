@@ -4,14 +4,15 @@
 
 #include <QDateTime>
 #include <QHBoxLayout>
+#include <QIcon>
 #include <QLabel>
 #include <QLineEdit>
 #include <QPushButton>
-#include <QUuid>
+#include <QSize>
 #include <QVBoxLayout>
 
 LoginView::LoginView(QWidget *parent)
-    : QWidget(parent),
+    : QDialog(parent),
       failedAttempts(0),
       lockUntilMs(0)
 {
@@ -40,6 +41,8 @@ LoginView::LoginView(QWidget *parent)
     captchaButton = new QPushButton(this);
     captchaButton->setToolTip("点击刷新验证码");
     captchaButton->setObjectName("captchaButton");
+    captchaButton->setFixedSize(112, 42);
+    captchaButton->setIconSize(QSize(108, 38));
     loginButton = new QPushButton("登录", this);
     loginButton->setObjectName("primaryButton");
 
@@ -80,7 +83,7 @@ LoginView::LoginView(QWidget *parent)
     connect(captchaEdit, &QLineEdit::returnPressed, this, &LoginView::onLoginClicked);
 
     setStyleSheet(
-        "QWidget#loginPanel { background: #0D1726; color: #E8F0F7; }"
+        "QDialog#loginPanel { background: #0D1726; color: #E8F0F7; }"
         "QLabel#eyebrowLabel { color: #62D5C9; font: 700 10pt 'Microsoft YaHei UI'; letter-spacing: 1px; }"
         "QLabel#loginTitle { color: #F5F8FC; font: 700 24pt 'Microsoft YaHei UI'; }"
         "QLabel#loginHint { color: #8FA3B8; font: 10pt 'Microsoft YaHei UI'; }"
@@ -118,7 +121,7 @@ void LoginView::onLoginClicked()
         return;
     }
 
-    if (captchaEdit->text().trimmed().compare(captchaText, Qt::CaseInsensitive) != 0)
+    if (!captchaGenerator.matches(captchaEdit->text()))
     {
         showInlineError("验证码错误，请重新输入。");
         captchaEdit->clear();
@@ -134,7 +137,7 @@ void LoginView::onLoginClicked()
         captchaEdit->clear();
         refreshCaptcha();
         emit loginSucceeded(username);
-        close();
+        accept();
         return;
     }
 
@@ -163,10 +166,9 @@ void LoginView::onShowPasswordClicked()
 
 void LoginView::refreshCaptcha()
 {
-    captchaText = QUuid::createUuid().toString()
-                      .remove('-').remove('{').remove('}')
-                      .left(4).toUpper();
-    captchaButton->setText(captchaText);
+    captchaGenerator.regenerate();
+    captchaButton->setText(QString());
+    captchaButton->setIcon(QIcon(captchaGenerator.render(QSize(108, 38))));
 }
 
 void LoginView::showInlineError(const QString &message)

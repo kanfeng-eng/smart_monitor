@@ -29,6 +29,10 @@ private slots:
     void showFourView();
     void toggleRecording(bool enabled);
     void renameSelectedChannel();
+    void selectFallbackVideo();
+    void selectStoragePath();
+    void openStorageFolder();
+    void openPlayback();
     void saveSegment(int channel,
                      const QString &channelName,
                      const QDateTime &startTime,
@@ -55,6 +59,9 @@ private:
     QPushButton *fourViewButton;
     QPushButton *recordButton;
     QPushButton *renameButton;
+    QPushButton *fallbackVideoButton;
+    QPushButton *storageButton;
+    QPushButton *openStorageButton;
     QLabel *userLabel;
     QLabel *clockLabel;
     QLabel *diskLabel;

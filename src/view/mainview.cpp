@@ -5,8 +5,10 @@
 #include "../model/videomodel.h"
 
 #include <QDateTime>
+#include <QDesktopServices>
 #include <QDir>
 #include <QFileInfo>
+#include <QFileDialog>
 #include <QFrame>
 #include <QGridLayout>
 #include <QHBoxLayout>
@@ -19,6 +21,7 @@
 #include <QStorageInfo>
 #include <QStyle>
 #include <QTimer>
+#include <QUrl>
 #include <QVBoxLayout>
 
 MainView::MainView(QWidget *parent)
@@ -31,8 +34,8 @@ MainView::MainView(QWidget *parent)
       selectedChannel(0)
 {
     setWindowTitle("智能监控系统");
-    resize(1440, 900);
-    setMinimumSize(1080, 700);
+    resize(1200, 760);
+    setMinimumSize(1000, 650);
 
     QSettings settings;
     storagePath = settings.value(
@@ -126,17 +129,18 @@ void MainView::buildUi()
     navTitle->setObjectName("sectionCaption");
     QPushButton *liveButton = new QPushButton("  实时监控", sidebar);
     liveButton->setObjectName("navActive");
-    const QStringList plannedItems = {"  录像回放", "  图片管理", "  移动侦测", "  事件日志"};
     sideLayout->addWidget(navTitle);
     sideLayout->addWidget(liveButton);
-    for (const QString &item : plannedItems)
-    {
-        QPushButton *button = new QPushButton(item, sidebar);
-        button->setObjectName("navPlanned");
-        button->setEnabled(false);
-        button->setToolTip("当前版本暂未开放");
-        sideLayout->addWidget(button);
-    }
+    QPushButton *playbackButton = new QPushButton("  录像回放", sidebar);
+    playbackButton->setObjectName("navPlanned");
+    sideLayout->addWidget(playbackButton);
+    connect(playbackButton, &QPushButton::clicked, this, &MainView::openPlayback);
+
+    QPushButton *logsButton = new QPushButton("  事件日志", sidebar);
+    logsButton->setObjectName("navPlanned");
+    logsButton->setEnabled(false);
+    logsButton->setToolTip("当前版本暂未开放");
+    sideLayout->addWidget(logsButton);
     sideLayout->addStretch();
     QLabel *scopeLabel = new QLabel("本地运行\n数据保存在本机", sidebar);
     scopeLabel->setObjectName("scopeLabel");
@@ -163,12 +167,21 @@ void MainView::buildUi()
     fourViewButton = new QPushButton("四画面", workspace);
     fourViewButton->setProperty("active", true);
     renameButton = new QPushButton("通道命名", workspace);
+    fallbackVideoButton = new QPushButton("备用视频", workspace);
+    storageButton = new QPushButton("存储位置", workspace);
+    openStorageButton = new QPushButton("打开目录", workspace);
+    fallbackVideoButton->setToolTip("为未接入摄像头的通道选择本地视频");
+    storageButton->setToolTip(QDir::toNativeSeparators(storagePath));
+    openStorageButton->setToolTip(QDir::toNativeSeparators(storagePath));
     recordButton = new QPushButton("开始录像", workspace);
     recordButton->setObjectName("recordButton");
     recordButton->setCheckable(true);
     heading->addWidget(singleViewButton);
     heading->addWidget(fourViewButton);
     heading->addWidget(renameButton);
+    heading->addWidget(fallbackVideoButton);
+    heading->addWidget(storageButton);
+    heading->addWidget(openStorageButton);
     heading->addWidget(recordButton);
     workLayout->addLayout(heading);
 
@@ -207,6 +220,10 @@ void MainView::buildUi()
     connect(fourViewButton, &QPushButton::clicked, this, &MainView::showFourView);
     connect(recordButton, &QPushButton::toggled, this, &MainView::toggleRecording);
     connect(renameButton, &QPushButton::clicked, this, &MainView::renameSelectedChannel);
+    connect(fallbackVideoButton, &QPushButton::clicked,
+            this, &MainView::selectFallbackVideo);
+    connect(storageButton, &QPushButton::clicked, this, &MainView::selectStoragePath);
+    connect(openStorageButton, &QPushButton::clicked, this, &MainView::openStorageFolder);
 }
 
 void MainView::createCameraChannels()
@@ -227,7 +244,8 @@ void MainView::createCameraChannels()
         connect(camera, &CameraWidget::recordingError, this, &MainView::showRecordingError);
         camera->start();
     }
-    selectChannel(0);
+    selectedChannel = 0;
+    cameras.first()->setSelected(true);
 }
 
 void MainView::applyTheme()
@@ -235,14 +253,14 @@ void MainView::applyTheme()
     setStyleSheet(
         "* { font-family: 'Microsoft YaHei UI'; font-size: 10pt; }"
         "QWidget#appRoot { background: #0B1421; color: #E7EEF5; }"
-        "QFrame#topBar { background: #0F1C2C; border-bottom: 1px solid #21344B; }"
+        "QFrame#topBar { background: #0F1C2C; }"
         "QLabel#brandLabel { color: #64D7CA; font: 700 9pt 'Consolas'; letter-spacing: 2px; }"
         "QLabel#titleLabel { color: #F5F8FC; font-size: 17pt; font-weight: 700; }"
         "QLabel#clockLabel { color: #91A6BA; font-family: 'Consolas'; }"
         "QLabel#userLabel { color: #BDD0DE; padding: 8px 12px; background: #15263A; border-radius: 7px; }"
         "QPushButton#loginButton { color: #0A1722; background: #64D7CA; border: 0; border-radius: 7px; padding: 9px 16px; font-weight: 700; }"
         "QPushButton#loginButton:hover { background: #7BE2D7; }"
-        "QFrame#sidebar { background: #0C1725; border-right: 1px solid #1C3046; }"
+        "QFrame#sidebar { background: #0C1725; }"
         "QLabel#sectionCaption { color: #70869B; font-size: 9pt; padding: 0 8px 7px 8px; }"
         "QPushButton#navActive { text-align: left; color: #EAF7F5; background: #173B42; border: 1px solid #24575D; border-radius: 8px; padding: 11px 12px; font-weight: 700; }"
         "QPushButton#navPlanned { text-align: left; color: #586B7E; background: transparent; border: 0; padding: 10px 12px; }"
@@ -287,9 +305,14 @@ void MainView::openLoginView()
         connect(loginView, &LoginView::loginSucceeded,
                 this, &MainView::onLoginSucceeded);
     }
-    loginView->show();
-    loginView->raise();
-    loginView->activateWindow();
+
+    hide();
+    const int result = loginView->exec();
+    show();
+    raise();
+    activateWindow();
+    if (result != QDialog::Accepted && !loggedIn)
+        showStatusMessage("已取消登录，继续使用访客模式。");
 }
 
 void MainView::onLoginSucceeded(const QString &username)
@@ -303,8 +326,7 @@ void MainView::selectChannel(int index)
     selectedChannel = index;
     for (CameraWidget *camera : cameras)
         camera->setSelected(camera->channelIndex() == index);
-    if (singleMode)
-        showSingleView();
+    showSingleView();
 }
 
 void MainView::showSingleView()
@@ -350,19 +372,106 @@ void MainView::toggleRecording(bool enabled)
         showStatusMessage("请先登录管理员账号，再启动录像。", true);
         return;
     }
-    if (enabled && !DbConn::getInstance().database().isOpen())
-    {
-        recordButton->setChecked(false);
-        showStatusMessage("数据库未连接，无法启动需要入库的录像。", true);
-        return;
-    }
-
     for (CameraWidget *camera : cameras)
         camera->setRecording(enabled);
     recordButton->setText(enabled ? "停止录像" : "开始录像");
     recordingSummaryLabel->setText(enabled ? "REC · 四路分段录像" : "录像未启动");
-    showStatusMessage(enabled ? "已启动四路录像，每 60 秒自动分段。"
+    showStatusMessage(enabled ? QString("已启动四路录像，每 60 秒自动分段。保存至：%1")
+                                    .arg(QDir::toNativeSeparators(storagePath))
                               : "录像已停止，未满 60 秒的视频段已保存。");
+}
+
+void MainView::selectFallbackVideo()
+{
+    if (!loggedIn)
+    {
+        showStatusMessage("请先登录管理员账号，再选择备用视频。", true);
+        return;
+    }
+    if (recordButton->isChecked())
+    {
+        showStatusMessage("请先停止录像，再切换备用视频。", true);
+        return;
+    }
+
+    const QString filePath = QFileDialog::getOpenFileName(
+        this, "选择未接入通道使用的备用视频", QString(),
+        "视频文件 (*.mp4 *.avi *.mov *.mkv);;所有文件 (*.*)");
+    if (filePath.isEmpty())
+        return;
+
+    QSettings().setValue("video/fallbackVideo", filePath);
+    for (CameraWidget *camera : cameras)
+        camera->setFallbackVideo(filePath);
+    showStatusMessage(QString("备用视频已应用到无摄像头通道：%1")
+                          .arg(QFileInfo(filePath).fileName()));
+}
+
+void MainView::selectStoragePath()
+{
+    if (!loggedIn)
+    {
+        showStatusMessage("请先登录管理员账号，再修改存储位置。", true);
+        return;
+    }
+    if (recordButton->isChecked())
+    {
+        showStatusMessage("请先停止录像，再修改存储位置。", true);
+        return;
+    }
+
+    const QString path = QFileDialog::getExistingDirectory(
+        this, "选择录像存储目录", storagePath);
+    if (path.isEmpty())
+        return;
+    if (!QDir().mkpath(path))
+    {
+        showStatusMessage(QString("无法创建录像目录：%1").arg(path), true);
+        return;
+    }
+
+    storagePath = QDir::cleanPath(path);
+    QSettings().setValue("video/storagePath", storagePath);
+    storageButton->setToolTip(QDir::toNativeSeparators(storagePath));
+    openStorageButton->setToolTip(QDir::toNativeSeparators(storagePath));
+    for (CameraWidget *camera : cameras)
+        camera->setStoragePath(storagePath);
+    updateDiskStatus();
+    showStatusMessage(QString("录像存储位置已更新：%1")
+                          .arg(QDir::toNativeSeparators(storagePath)));
+}
+
+void MainView::openStorageFolder()
+{
+    if (!loggedIn)
+    {
+        showStatusMessage("请先登录管理员账号，再打开录像目录。", true);
+        return;
+    }
+
+    QDir().mkpath(storagePath);
+    if (!QDesktopServices::openUrl(QUrl::fromLocalFile(storagePath)))
+        showStatusMessage(QString("无法打开录像目录：%1").arg(storagePath), true);
+}
+
+void MainView::openPlayback()
+{
+    if (!loggedIn)
+    {
+        showStatusMessage("请先登录管理员账号，再打开录像回放。", true);
+        return;
+    }
+
+    const QString filePath = QFileDialog::getOpenFileName(
+        this, "选择录像文件", storagePath,
+        "录像文件 (*.avi *.mp4 *.mov *.mkv);;所有文件 (*.*)");
+    if (filePath.isEmpty())
+        return;
+
+    if (!QDesktopServices::openUrl(QUrl::fromLocalFile(filePath)))
+        showStatusMessage(QString("无法打开录像文件：%1").arg(filePath), true);
+    else
+        showStatusMessage(QString("已打开录像：%1").arg(QFileInfo(filePath).fileName()));
 }
 
 void MainView::renameSelectedChannel()
@@ -451,8 +560,6 @@ void MainView::setLoggedIn(bool enabled, const QString &username)
     loggedIn = enabled;
     userLabel->setText(enabled ? QString("管理员 · %1").arg(username) : "访客模式");
     loginButton->setText(enabled ? "退出登录" : "管理员登录");
-    renameButton->setEnabled(enabled);
-    recordButton->setEnabled(enabled && DbConn::getInstance().database().isOpen());
     recordButton->setToolTip(enabled ? QString() : "登录后可启动录像");
 }
 

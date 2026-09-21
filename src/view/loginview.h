@@ -1,13 +1,15 @@
 #ifndef LOGINVIEW_H
 #define LOGINVIEW_H
 
-#include <QWidget>
+#include <QDialog>
+
+#include "../utils/captchagenerator.h"
 
 class QLineEdit;
 class QPushButton;
 class QLabel;
 
-class LoginView : public QWidget
+class LoginView : public QDialog
 {
     Q_OBJECT
 
@@ -34,7 +36,7 @@ private:
     QPushButton *captchaButton;
     QLabel *errorLabel;
 
-    QString captchaText;
+    CaptchaGenerator captchaGenerator;
     int failedAttempts;
     qint64 lockUntilMs;
 };

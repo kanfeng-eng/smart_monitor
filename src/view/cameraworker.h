@@ -26,6 +26,8 @@ public slots:
     void stop();
     void setRecording(bool enabled);
     void setChannelName(const QString &name);
+    void setFallbackVideo(const QString &filePath);
+    void setStoragePath(const QString &path);
 
 signals:
     void frameReady(const QImage &frame);

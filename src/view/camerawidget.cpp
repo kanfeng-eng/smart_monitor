@@ -110,6 +110,18 @@ void CameraWidget::setChannelName(const QString &channelName)
                               Q_ARG(QString, name));
 }
 
+void CameraWidget::setFallbackVideo(const QString &filePath)
+{
+    QMetaObject::invokeMethod(worker, "setFallbackVideo", Qt::QueuedConnection,
+                              Q_ARG(QString, filePath));
+}
+
+void CameraWidget::setStoragePath(const QString &path)
+{
+    QMetaObject::invokeMethod(worker, "setStoragePath", Qt::QueuedConnection,
+                              Q_ARG(QString, path));
+}
+
 void CameraWidget::setSelected(bool selected)
 {
     setProperty("selected", selected);

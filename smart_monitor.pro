@@ -12,6 +12,7 @@ SOURCES += \
     src/model/dbconn.cpp \
     src/model/usermodel.cpp \
     src/model/videomodel.cpp \
+    src/utils/captchagenerator.cpp \
     src/view/camerawidget.cpp \
     src/view/cameraworker.cpp \
     src/view/loginview.cpp \
@@ -22,6 +23,7 @@ HEADERS += \
     src/model/dbconn.h \
     src/model/usermodel.h \
     src/model/videomodel.h \
+    src/utils/captchagenerator.h \
     src/view/camerawidget.h \
     src/view/cameraworker.h \
     src/view/loginview.h \
@@ -36,6 +38,7 @@ INCLUDEPATH += $$PWD/src/model
 INCLUDEPATH += $$PWD/src/view
 INCLUDEPATH += $$PWD/src/controller
 INCLUDEPATH += $$PWD/src/include
+INCLUDEPATH += $$PWD/src/utils
 
 
 # =========================
