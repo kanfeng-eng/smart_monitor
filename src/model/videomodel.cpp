@@ -60,6 +60,55 @@ bool VideoModel::saveSegment(int channel,
     return query.exec();
 }
 
+QVector<VideoSegment> VideoModel::findSegments(const QDateTime &from,
+                                               const QDateTime &to,
+                                               int channel,
+                                               QString *error) const
+{
+    QVector<VideoSegment> segments;
+    QSqlDatabase database = DbConn::getInstance().database();
+    if (!database.isOpen())
+    {
+        if (error)
+            *error = "数据库未连接";
+        return segments;
+    }
+
+    QSqlQuery query(database);
+    QString sql = "SELECT segment_id, channel_no, channel_name, start_time, end_time, "
+                  "file_path, event_type FROM video_segments "
+                  "WHERE start_time < :to_time AND end_time >= :from_time";
+    if (channel > 0)
+        sql += " AND channel_no = :channel";
+    sql += " ORDER BY start_time DESC";
+    query.prepare(sql);
+    query.bindValue(":from_time", from);
+    query.bindValue(":to_time", to);
+    if (channel > 0)
+        query.bindValue(":channel", channel);
+
+    if (!query.exec())
+    {
+        if (error)
+            *error = query.lastError().text();
+        return segments;
+    }
+
+    while (query.next())
+    {
+        VideoSegment segment;
+        segment.id = query.value(0).toLongLong();
+        segment.channel = query.value(1).toInt();
+        segment.channelName = query.value(2).toString();
+        segment.startTime = query.value(3).toDateTime();
+        segment.endTime = query.value(4).toDateTime();
+        segment.filePath = query.value(5).toString();
+        segment.eventType = query.value(6).toString();
+        segments.append(segment);
+    }
+    return segments;
+}
+
 bool VideoModel::addSystemLog(const QString &level, const QString &message) const
 {
     QSqlQuery query(DbConn::getInstance().database());

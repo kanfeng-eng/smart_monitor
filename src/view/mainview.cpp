@@ -1,6 +1,7 @@
 #include "mainview.h"
 #include "camerawidget.h"
 #include "loginview.h"
+#include "playbackdialog.h"
 #include "../model/dbconn.h"
 #include "../model/videomodel.h"
 
@@ -462,16 +463,8 @@ void MainView::openPlayback()
         return;
     }
 
-    const QString filePath = QFileDialog::getOpenFileName(
-        this, "选择录像文件", storagePath,
-        "录像文件 (*.avi *.mp4 *.mov *.mkv);;所有文件 (*.*)");
-    if (filePath.isEmpty())
-        return;
-
-    if (!QDesktopServices::openUrl(QUrl::fromLocalFile(filePath)))
-        showStatusMessage(QString("无法打开录像文件：%1").arg(filePath), true);
-    else
-        showStatusMessage(QString("已打开录像：%1").arg(QFileInfo(filePath).fileName()));
+    PlaybackDialog dialog(storagePath, this);
+    dialog.exec();
 }
 
 void MainView::renameSelectedChannel()

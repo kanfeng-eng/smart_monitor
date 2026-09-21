@@ -1,5 +1,5 @@
 QT += widgets sql
-CONFIG += c++11
+CONFIG += c++17
 
 
 # =========================
@@ -16,7 +16,9 @@ SOURCES += \
     src/view/camerawidget.cpp \
     src/view/cameraworker.cpp \
     src/view/loginview.cpp \
-    src/view/mainview.cpp
+    src/view/mainview.cpp \
+    src/view/playbackdialog.cpp \
+    src/view/playbackworker.cpp
 
 HEADERS += \
     src/controller/loginctl.h \
@@ -27,7 +29,9 @@ HEADERS += \
     src/view/camerawidget.h \
     src/view/cameraworker.h \
     src/view/loginview.h \
-    src/view/mainview.h
+    src/view/mainview.h \
+    src/view/playbackdialog.h \
+    src/view/playbackworker.h
 
 
 # =========================
